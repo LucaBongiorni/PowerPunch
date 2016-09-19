@@ -159,9 +159,6 @@
   {
     $Action.Arguments = $Arguments
   }
-  
-  Write-Output "Logon Type:  " $Principal.LogonType
-  Write-Output "Username:  $Username"
  
   $RootFolder.RegisterTaskDefinition($Name,$TaskDefinition,6,$Username, $Password, $Principal.LogonType)
 }
