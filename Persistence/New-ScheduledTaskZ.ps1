@@ -4,7 +4,7 @@
       Creates Scheduled Tasks using the Schedule.Service COM Object
 
       Author: Jared Haight (@jaredhaight)
-      License: BSD 3-Clause
+      License: MIT License
       Required Dependencies: None
       Optional Dependencies: None
 
