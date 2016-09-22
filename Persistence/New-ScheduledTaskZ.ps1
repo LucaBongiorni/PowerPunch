@@ -62,7 +62,7 @@
       Create a Scheduled Task that starts when any user logs in. Task will repeat every 15 minutes.
 
       .LINK 
-      Script source can be found at https://github.com/jaredhaight/PowerShellScripts/Persistence/New-ScheduledTaskZ.ps1
+      Script source can be found at https://github.com/jaredhaight/PowerPunch/Persistence/New-ScheduledTaskZ.ps1
   #>
   
   [CmdletBinding()]
@@ -78,6 +78,9 @@
     
     [Parameter(Mandatory=$True)]
     [string]$Name,
+    
+    [Parameter()]
+    [string]$ComputerName = $null,
     
     [Parameter()]
     [string]$Username = $null,
@@ -110,7 +113,12 @@
   
   $ActionTypeExec = 0
   $TaskScheduler = New-Object -ComObject "Schedule.Service"
-  $TaskScheduler.Connect()
+  try {
+    $TaskScheduler.Connect($ComputerName)
+  }
+  catch {
+    Write-Error "Could not connect to computer: $ComputerName"
+  }
   $RootFolder = $TaskScheduler.GetFolder('\')
   $TaskDefinition = $TaskScheduler.NewTask(0)
 
