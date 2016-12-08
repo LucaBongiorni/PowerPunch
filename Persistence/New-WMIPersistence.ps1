@@ -7,7 +7,6 @@ function New-WMIPersistence {
         [Parameter(Mandatory=$True)]
         [string]$Command,
 
-        [Parameter()]
         [string]$Arguments,
 
         [switch]$OnStartup=$True,
@@ -30,9 +29,9 @@ function New-WMIPersistence {
         Query=$query
     }
     $WMIEventFilter = Set-WmiInstance -Class __EventFilter -NameSpace "root\subscription" -Arguments $filterArgs
-    
+
     $consumerArgs = @{
-        Name="$Name-Consumer";
+        Name="$Name";
         ExecutablePath= $Command;
         CommandLineTemplate ="$Command $Arguments"
     }
@@ -45,3 +44,40 @@ function New-WMIPersistence {
 
     Set-WmiInstance -Class __FilterToConsumerBinding -Namespace "root\subscription" -Arguments $instanceArgs
 }
+
+Function Remove-WMIPersistence {
+    [cmdletbinding()]
+    Param(
+        [Parameter(Mandatory=$True)]
+        [string]$Name
+    )
+    
+    $filter = Get-WmiObject -Namespace "root/subscription" -Class __EventFilter -Filter "Name = '$Name'"
+
+    if ($filter) {
+        Write-Verbose "Removing Filter: $Name"
+        $filter | Remove-WmiObject
+    }
+    else {
+        Write-Warning "No __EventFilter named $Name found!"
+    }
+
+    $consumer = Get-WmiObject -Namespace "root/subscription" -Class CommandLineEventConsumer -Filter "Name = '$Name'"
+    
+    if ($consumer) {
+        Write-Verbose "Removing Consumer: $Name"
+        $consumer | Remove-WmiObject
+    }
+    else {
+        Write-Warning "No CommandLineEventConsumer named $ConsumerName found!"
+    }
+
+    $filterToConsumerBinding = Get-WmiObject __FilterToConsumerBinding -Namespace root\subscription | Where-Object { $_.Filter -match "$Name"}
+    if ($filterToConsumerBinding) {
+        Write-Verbose "Removing Binding: $Name"
+        $filterToConsumerBinding | Remove-WmiObject
+    }
+    else {
+        Write-Warning "No FilterToConsumerBinding named $Name found!"
+    }
+ }
