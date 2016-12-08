@@ -32,7 +32,7 @@
       .PARAMETER Repeat
       How often the task will repeat, specified in minutes.
 
-      .PARAMETER Commnad
+      .PARAMETER Command
       The command to run
 
       .PARAMETER Arguments

