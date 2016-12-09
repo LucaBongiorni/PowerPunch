@@ -1,5 +1,5 @@
 ﻿function New-ScheduledTaskZ {
-  <# 
+    <# 
       .SYNOPSIS 
       Creates Scheduled Tasks using the Schedule.Service COM Object
 
@@ -17,7 +17,7 @@
       .PARAMETER Time  
       Create a task that runs at a specified time
 
-      .PARAMETER OnBoot
+      .PARAMETER OnStartup
       Create a task that runs after the computer boots. Requires Admin Rights.
 
       .PARAMETER OnLogon  
@@ -47,7 +47,7 @@
       Create a Scheduled Task that adds 3+2 in PowerShell. Task will start in 15 minutes.
 
       .EXAMPLE 
-      PS C:\>New-ScheduledTaskZ -OnBoot -Command powershell.exe -Arguments "-Command &{3 + 2; read-host}" -Repeat 15
+      PS C:\>New-ScheduledTaskZ -OnStartup -Command powershell.exe -Arguments "-Command &{3 + 2; read-host}" -Repeat 15
  
       Description
       -----------
@@ -63,110 +63,112 @@
 
       .LINK 
       Script source can be found at https://github.com/jaredhaight/PowerPunch/Persistence/New-ScheduledTaskZ.ps1
-  #>
+    #>
   
-  [CmdletBinding()]
-  Param(      
-    [Parameter()]
-    [switch]$Time,
+    [CmdletBinding()]
+    Param(      
+        [Parameter()]
+        [switch]$Time,
 
-    [Parameter()]
-    [switch]$OnLogon,
+        [Parameter()]
+        [switch]$OnLogon,
     
-    [Parameter()]
-    [switch]$OnBoot,
+        [Parameter()]
+        [switch]$OnStartup,
     
-    [Parameter(Mandatory=$True)]
-    [string]$Name,
+        [Parameter(Mandatory=$True)]
+        [string]$Name,
     
-    [Parameter()]
-    [string]$ComputerName = $null,
+        [Parameter()]
+        [string]$ComputerName = $null,
     
-    [Parameter()]
-    [string]$Username = $null,
+        [Parameter()]
+        [string]$Username = $null,
     
-    [Parameter()]
-    [string]$Password = $null,
+        [Parameter()]
+        [string]$Password = $null,
 
-    [Parameter()]
-    [DateTime]$StartTime = ((Get-Date).AddSeconds(30)),
+        [Parameter()]
+        [DateTime]$StartTime = ((Get-Date).AddSeconds(30)),
 
-    [Parameter()]
-    [DateTime]$EndTime = ((Get-Date).AddYears(30)),
+        [Parameter()]
+        [DateTime]$EndTime = ((Get-Date).AddYears(30)),
     
-    [Parameter()]
-    [int]$Repeat,
+        [Parameter()]
+        [int]$Repeat,
     
-    [Parameter(Mandatory=$True)]
-    [string]$Command,
+        [Parameter(Mandatory=$True)]
+        [string]$Command,
     
-    [Parameter()]
-    [string]$Arguments,
+        [Parameter()]
+        [string]$Arguments,
     
-    [Parameter()]
-    [switch]$Hidden = $false
-  )
+        [Parameter()]
+        [switch]$Hidden = $false
+    )
   
-  if ($Time) {$TriggerType = 1}
-  elseif ($OnBoot) {$TriggerType = 8}
-  elseif ($OnLogon) {$TriggerType = 9}
+    if ($Time) {$TriggerType = 1}
+    elseif ($OnStartup) {$TriggerType = 8}
+    elseif ($OnLogon) {$TriggerType = 9}
   
-  $ActionTypeExec = 0
-  $TaskScheduler = New-Object -ComObject "Schedule.Service"
-  try {
-    $TaskScheduler.Connect($ComputerName)
-  }
-  catch {
-    Write-Error "Could not connect to computer: $ComputerName"
-  }
-  $RootFolder = $TaskScheduler.GetFolder('\')
-  $TaskDefinition = $TaskScheduler.NewTask(0)
+    $ActionTypeExec = 0
+    $TaskScheduler = New-Object -ComObject "Schedule.Service"
 
-  $Principal = $TaskDefinition.Principal
-  $Principal.LogonType = 3
-  
-  if ($Username) {
-    $Principal.UserId = $Username
-  }
-  
-  if ($Username.ToUpper() -match "SYSTEM"){
-    $Principal.LogonType = 5
-    $Principal.RunLevel = 1
-  }
-  
-  if ($Password) {
-    $Principal.LogonType = 1
-    
-  }
-  
-  if ($Highest) {
-    $Principal.RunLevel = 1
-  }
-  
-  $TaskSettings = $TaskDefinition.Settings
-  $TaskSettings.Enabled = $True
-  $TaskSettings.StartWhenAvailable = $True
-  $TaskSettings.Hidden = $Hidden
+    try {
+        $TaskScheduler.Connect($ComputerName)
+    }
+    catch {
+        Write-Error "Could not connect to computer: $ComputerName"
+        Break
+    }
 
-  $Triggers = $TaskDefinition.Triggers
-  $Trigger = $Triggers.Create($TriggerType)
+    $RootFolder = $TaskScheduler.GetFolder('\')
+    $TaskDefinition = $TaskScheduler.NewTask(0)
 
-  $StartTimeFormated = Get-Date $StartTime -Format s
-  $EndTimeFormated = Get-Date $EndTime -Format s 
-  $Trigger.StartBoundary = $StartTimeFormated
-  $Trigger.EndBoundary = $EndTimeFormated
-  $Trigger.Enabled = $True
-
-  if ($Repeat) {
-    $Trigger.Repetition.Interval = "PT" + $Repeat.ToString() + "M"
-  }
+    $Principal = $TaskDefinition.Principal
+    $Principal.LogonType = 3
   
-  $Action = $TaskDefinition.Actions.Create($ActionTypeExec)
-  $Action.Path = $Command
-  if ($Arguments)
-  {
-    $Action.Arguments = $Arguments
-  }
+    if ($Username) {
+        $Principal.UserId = $Username
+    }
+  
+    if ($Username.ToUpper() -match "SYSTEM"){
+        $Principal.LogonType = 5
+        $Principal.RunLevel = 1
+    }
+  
+    if ($Password) {
+        $Principal.LogonType = 1
+    }
+  
+    if ($Highest) {
+        $Principal.RunLevel = 1
+    }
+  
+    $TaskSettings = $TaskDefinition.Settings
+    $TaskSettings.Enabled = $True
+    $TaskSettings.StartWhenAvailable = $True
+    $TaskSettings.Hidden = $Hidden
+
+    $Triggers = $TaskDefinition.Triggers
+    $Trigger = $Triggers.Create($TriggerType)
+
+    $StartTimeFormated = Get-Date $StartTime -Format s
+    $EndTimeFormated = Get-Date $EndTime -Format s 
+    $Trigger.StartBoundary = $StartTimeFormated
+    $Trigger.EndBoundary = $EndTimeFormated
+    $Trigger.Enabled = $True
+
+    if ($Repeat) {
+        $Trigger.Repetition.Interval = "PT" + $Repeat.ToString() + "M"
+    }
+
+    $Action = $TaskDefinition.Actions.Create($ActionTypeExec)
+    $Action.Path = $Command
+
+    if ($Arguments) {
+        $Action.Arguments = $Arguments
+    }
  
-  $RootFolder.RegisterTaskDefinition($Name,$TaskDefinition,6,$Username, $Password, $Principal.LogonType)
+    $RootFolder.RegisterTaskDefinition($Name,$TaskDefinition,6,$Username, $Password, $Principal.LogonType)
 }

